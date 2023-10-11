@@ -1,0 +1,46 @@
+clear;
+clc;
+x = -3:0.02:3;
+
+y = 6.5 * sin(2.1 * x + pi/3);
+
+f = 0.6;
+
+num_samples = length(y);
+num_corrupted = round(f * num_samples);
+corrupted_indices = randperm(num_samples, num_corrupted);
+
+corruption_values = rand(1, num_corrupted) * 20 + 100;
+
+z = y;
+z(corrupted_indices) = z(corrupted_indices) + corruption_values;
+
+ymedian=zeros(size(z));
+ymean=zeros(size(z));
+yquartile=zeros(size(z));
+nb=8;
+for i=1:length(z);
+    starti = max(1, i - nb);
+    endi = min(length(z), i + nb);
+    
+    neighbourhood = z(starti:endi);
+
+    ymedian(i) = median(neighbourhood);
+    yquartile(i) = quantile(neighbourhood, 0.25);
+    ymean(i) = mean(neighbourhood);
+end
+rmse_median= sum((y - ymedian).^2)/sum(y.^2);
+rmse_mean= sum((y - ymean).^2)/sum(y.^2);
+rmse_quartile= sum((y - yquartile).^2)/sum(y.^2);
+figure;
+plot(x, y, 'k', 'LineWidth', 2);
+hold on;
+plot(x, z, 'b', 'LineWidth', 1);
+plot(x, ymedian, 'r', 'LineWidth', 1);
+plot(x, ymean, 'g', 'LineWidth', 1);
+plot(x, yquartile, 'm', 'LineWidth', 1);
+hold off;
+xlabel('X');
+ylabel('Amplitude');
+title('Sine Wave: Original, Corrupted, and Filtered for 60% corrupted values');
+legend('Original', 'Corrupted', 'Median Filter', 'Moving Average Filter', 'Moving Quartile Filter', 'Location', 'best');
